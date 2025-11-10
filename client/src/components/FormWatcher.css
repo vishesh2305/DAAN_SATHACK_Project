@@ -1,0 +1,181 @@
+/* ---
+// PASTE THIS ENTIRE CODE BLOCK INTO:
+// src/components/FormWatcher.css
+// --- */
+
+:root {
+  /* Light Theme Colors (Unchanged) */
+  --cat-body: #000000;
+  --cat-accent: #f52d00;
+  --cat-eye-white: #ffffff;
+  --cat-pupil: #000000;
+  --cat-tag: #f5b400;
+}
+
+.dark {
+  /* Dark Theme Colors (High-Contrast) */
+  --cat-body: #E5E7EB; /* Light Gray (gray-200) */
+  --cat-accent: #3B82F6; /* Bright Blue (blue-500) */
+  --cat-eye-white: #1F2937; /* Dark Gray (gray-800) */
+  --cat-pupil: #60A5FA; /* Light Blue (blue-400) */
+  --cat-tag: #3B82F6; /* Bright Blue (blue-500) */
+}
+
+.cat-container {
+  /* This makes the cat scale. You can change this to make it bigger/smaller! */
+  font-size: 1.2em; 
+  position: relative;
+  width: 31.25em;
+  height: 31.25em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cat {
+  background-color: var(--cat-body);
+  height: 5em;
+  width: 12.5em;
+  position: absolute;
+  top: 18.75em;
+  border-radius: 0 2.18em 0 0;
+  transition: background-color 0.3s ease;
+}
+.cat:before {
+  content: "";
+  position: absolute;
+  height: 1.87em;
+  width: 1.75em;
+  background-color: var(--cat-body);
+  border-radius: 0 0 1.25em 1.25em;
+  bottom: -1.18em;
+  box-shadow: 3.75em 0 var(--cat-body), 7.18em 0 var(--cat-body), 10.75em 0 var(--cat-body);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+.cat:after {
+  content: "";
+  position: absolute;
+  height: 6.25em;
+  width: 7.5em;
+  /* Updated to use CSS variables */
+  background: linear-gradient(var(--cat-accent) 1.87em, var(--cat-body) 1.87em);
+  bottom: 4.93em;
+  transition: background 0.3s ease;
+}
+.face {
+  position: absolute;
+  background-color: var(--cat-body);
+  height: 7.5em;
+  width: 15em;
+  bottom: 11.18em;
+  left: -3.62em;
+  border-radius: 3.75em;
+  transition: background-color 0.3s ease;
+}
+
+.eye {
+  position: absolute;
+  height: 3.75em;
+  width: 5em;
+  background-color: var(--cat-eye-white);
+  border-radius: 1.87em;
+  top: 1.56em;
+  
+  /* Center the pupil */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  transition: background-color 0.3s ease;
+}
+.eye-l {
+  left: 1.87em;
+}
+.eye-r {
+  left: 8.12em; /* 1.87em + 6.25em shadow offset */
+}
+
+.pupil {
+  position: relative;
+  width: 1.0em; /* Shorter width */
+  height: 1.5em; /* Shorter height */
+  background-color: var(--cat-pupil);
+  border-radius: 0.93em; /* This makes it oval */
+  transition: transform 0.1s ease-out, background-color 0.3s ease;
+}
+
+/* --- WHISKERS REMOVED --- */
+
+.ear-l {
+  height: 0;
+  width: 0;
+  border-bottom: 3.12em solid var(--cat-body);
+  border-left: 1.56em solid transparent;
+  border-right: 1.56em solid transparent;
+  position: absolute;
+  bottom: 7.37em;
+  left: 3.12em;
+  transition: border-bottom-color 0.3s ease;
+}
+.ear-l:before,
+.ear-r:before {
+  position: absolute;
+  content: "";
+  height: 0;
+  width: 0;
+  border-bottom: 1.37em solid var(--cat-ear-inner);
+  border-left: 0.75em solid transparent;
+  border-right: 0.75em solid transparent;
+  left: -0.68em;
+  top: 1.56em;
+  transition: border-bottom-color 0.3s ease;
+}
+.ear-r {
+  height: 0;
+  width: 0;
+  border-bottom: 3.12em solid var(--cat-body);
+  border-right: 1.56em solid transparent;
+  border-left: 1.56em solid transparent;
+  position: absolute;
+  bottom: 7.37em;
+  left: 8.75em;
+  transition: border-bottom-color 0.3s ease;
+}
+.tag {
+  position: absolute;
+  height: 1.87em;
+  width: 1.87em;
+  background-color: var(--cat-tag);
+  border-radius: 50%;
+  z-index: 1;
+  bottom: 7.43em;
+  left: 2.81em;
+  transition: background-color 0.3s ease;
+}
+
+/* ---
+// TAIL STYLES UPDATED FOR "GRACE"
+// --- */
+.tail {
+  position: absolute;
+  background-color: var(--cat-body);
+  width: 8em; /* Was 7em, now longer */
+  height: 0.75em; /* Was 1.25em, now thinner */
+  left: 11.75em; /* Adjusted position */
+  top: 2.5em; /* Adjusted position */
+  border-radius: 1em;
+  
+  /* This is the key for rotation */
+  transform-origin: left center;
+  
+  /* --- THIS IS THE FIX --- */
+  /* Slower, smoother "ease-in-out" transition for a graceful wag */
+  transition: transform 0.4s ease-in-out, background-color 0.3s ease;
+}
+
+
+@media screen and (min-width: 600px) {
+  .cat-container {
+    font-size: 1.2em;
+  }
+}
