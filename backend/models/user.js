@@ -1,0 +1,44 @@
+﻿const mongoose = require("mongoose");
+const encrypt = require("mongoose-encryption");
+require("dotenv").config();
+
+const encKey = Buffer.from(process.env.ENC_KEY, "base64"); 
+const sigKey = Buffer.from(process.env.SIG_KEY, "base64"); 
+
+const userSchema = new mongoose.Schema({
+  name: String,
+  dob: Date,
+  location: String,
+  email: String,
+  password: String,
+  govtImage: Buffer,
+  selfieImage: Buffer,
+  blockchainAddress: String,
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  coordinates: {
+    lat: Number,
+    lng: Number,
+  },
+});
+
+
+userSchema.plugin(encrypt, {
+  encryptionKey: encKey,
+  signingKey: sigKey,
+  encryptedFields: [
+    "name",
+    "dob",
+    "location",
+    "password",
+    "govtImage",
+    "selfieImage",
+    "blockchainAddress",
+    "createdAt",
+    "coordinates",
+  ],
+});
+
+module.exports = mongoose.model("User", userSchema);
