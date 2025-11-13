@@ -19,8 +19,8 @@ import Button from '../components/common/Button.jsx';
 import Card from '../components/common/Card.jsx';
 import Web3 from 'web3';
 import { CROWDFUNDING_ABI, CROWDFUNDING_CONTRACT_ADDRESS } from '../constants';
-// 1. REMOVE Notification.jsx import
-import FormWatcher from '../components/FormWatcher.jsx'; 
+// 1. IMPORT the new Spline component (replaces FormWatcher)
+import SplineCampaignVisual from '../components/SplineCampaignVisual.jsx'; 
 import { useNotification } from '../contexts/NotificationProvider.jsx'; // 2. IMPORT THE HOOK
 
 // ... (InputHelpBox and StepProgressBar components are unchanged) ...
@@ -537,10 +537,11 @@ const CreateCampaignPage = () => {
                 {/* --- Two-Column Layout --- */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
                     
-                    {/* --- 2. LEFT COLUMN (The 2D Watcher) --- */}
-                    {/* This div is now much simpler. It just centers the new component. */}
-                    <div className="w-full h-[400px] lg:h-[500px] lg:sticky lg:top-32 flex items-center justify-center p-4">
-                        <FormWatcher focusedField={focusedField} />
+                    {/* --- 2. LEFT COLUMN (The Spline Visual) --- */}
+                    {/* Finalized layout: Large, sticky, no padding/border */}
+                    <div className="w-full h-[60vh] lg:h-full lg:min-h-[800px] lg:sticky lg:top-32 flex items-center justify-center">
+                        {/* REPLACED FormWatcher with SplineCampaignVisual */}
+                        <SplineCampaignVisual focusedField={focusedField} />
                     </div>
 
                     {/* --- RIGHT COLUMN (The "Form") --- */}

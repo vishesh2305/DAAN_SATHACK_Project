@@ -1,3 +1,4 @@
+/* src/index.css */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
@@ -69,7 +70,7 @@
 
 
 /*
-  --- CREATE CAMPAIGN WIZARD (Preserved) ---
+  --- CREATE CAMPAIGN WIZARD & NEW ANIMATIONS ---
 */
 @layer utilities {
   .animate-step-in {
@@ -85,6 +86,26 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+  
+  /* ADDED: Keyframes for the background spotlight animation */
+  .animate-spotlight {
+    animation: spotlight-move 3s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes spotlight-move {
+  0% {
+    opacity: 0;
+    transform: translate(0%, 0%) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(10%, -5%) rotate(5deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0%, 0%) rotate(0deg);
   }
 }
 /* --- END WIZARD --- */
