@@ -1,4 +1,4 @@
-// src/pages/CreatecampaignPage.jsx
+// src/pages/CreateCampaignPage.jsx
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -19,64 +19,59 @@ import Button from '../components/common/Button.jsx';
 import Card from '../components/common/Card.jsx';
 import Web3 from 'web3';
 import { CROWDFUNDING_ABI, CROWDFUNDING_CONTRACT_ADDRESS } from '../constants';
-// 1. IMPORT the new Spline component (replaces FormWatcher)
 import SplineCampaignVisual from '../components/SplineCampaignVisual.jsx'; 
-import { useNotification } from '../contexts/NotificationProvider.jsx'; // 2. IMPORT THE HOOK
+import FullPageSpline from '../components/FullPageSpline.jsx';
+import { useNotification } from '../contexts/NotificationProvider.jsx';
 
-// ... (InputHelpBox and StepProgressBar components are unchanged) ...
+// Input Help Box Component (THEME UPDATED for sexy light/dark contrast)
 const InputHelpBox = ({ title, text }) => (
-    <div className="mt-2 p-3 bg-blue-50 dark:bg-gray-800/50 border border-blue-200 dark:border-gray-700/50 rounded-lg text-sm transition-all duration-300">
-        <h4 className="font-semibold text-blue-700 dark:text-blue-300 flex items-center">
+    // Light: bg-blue-50/90, border-blue-300. Dark: bg-blue-500/10, border-blue-400/30
+    <div className="mt-3 p-4 bg-blue-50/90 dark:bg-blue-500/10 border border-blue-300 dark:border-blue-400/30 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm">
+        <h4 className="font-semibold text-blue-800 dark:text-blue-300 flex items-center">
             <Info className="h-4 w-4 mr-2 flex-shrink-0" />
             {title}
         </h4>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">{text}</p>
+        <p className="text-gray-700 dark:text-gray-300 mt-1 leading-relaxed">{text}</p>
     </div>
 );
 
+// Step Progress Bar Component (MODIFIED to remove vertical connector lines)
 const StepProgressBar = ({ currentStep, steps }) => (
     <nav aria-label="Progress">
-        <ol role="list" className="flex items-center">
+        <ol role="list" className="flex items-center justify-between">
             {steps.map((step, index) => {
                 const stepIndex = index + 1;
                 const isCompleted = stepIndex < currentStep;
                 const isCurrent = stepIndex === currentStep;
 
                 return (
-                    <li key={step.name} className={`relative ${index !== steps.length - 1 ? 'flex-1' : ''}`}>
+                    <li key={step.name} className={`relative flex-1 text-center`}>
+                        {/* Circle */}
                         {isCompleted ? (
-                            <div className="flex items-center font-semibold">
-                                <span className="flex-shrink-0">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600">
-                                        <CheckCircle className="h-6 w-6 text-white" aria-hidden="true" />
-                                    </div>
-                                </span>
-                                <span className="ml-4 text-sm font-medium text-gray-900 dark:text-white">{step.name}</span>
+                            <div className="flex justify-center">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 shadow-lg shadow-blue-500/50 transition-all duration-300 z-10">
+                                    <CheckCircle className="h-6 w-6 text-white" aria-hidden="true" />
+                                </div>
                             </div>
                         ) : isCurrent ? (
-                            <div className="flex items-center font-semibold" aria-current="step">
-                                <span className="flex-shrink-0">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-blue-600">
-                                        <span className="text-blue-600 dark:text-blue-400">{step.id}</span>
-                                    </div>
-                                </span>
-                                <span className="ml-4 text-sm font-medium text-blue-600 dark:text-blue-400">{step.name}</span>
+                            <div className="flex justify-center" aria-current="step">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-blue-600 dark:border-blue-400 bg-blue-500/20 shadow-lg shadow-blue-500/30 transition-all duration-300 z-10">
+                                    {/* Number is dark in light mode, light in dark mode */}
+                                    <span className="text-blue-600 dark:text-blue-300 font-bold text-lg">{step.id}</span>
+                                </div>
                             </div>
                         ) : (
-                            <div className="flex items-center font-semibold">
-                                <span className="flex-shrink-0">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-gray-300 dark:border-gray-700">
-                                        <span className="text-gray-500 dark:text-gray-400">{step.id}</span>
-                                    </div>
-                                </span>
-                                <span className="ml-4 text-sm font-medium text-gray-500 dark:text-gray-400">{step.name}</span>
+                            <div className="flex justify-center">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800/50 transition-all duration-300 z-10">
+                                    <span className="text-gray-500 dark:text-gray-400 text-lg">{step.id}</span>
+                                </div>
                             </div>
                         )}
 
-                        {/* Connector */}
+                        {/* Horizontal Connector Line (Stretching between circles) */}
                         {index !== steps.length - 1 && (
-                            <div className="absolute left-4 top-4 -ml-px mt-0.5 h-full w-0.5" aria-hidden="true">
-                                <div className={`w-full h-full ${isCompleted ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700'}`} />
+                            <div className="absolute top-0 mt-6 h-1 w-full flex justify-center items-center pointer-events-none">
+                                <div className={`h-full w-[calc(100%-1rem)] transition-all duration-300 ${isCompleted ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700'}`} />
                             </div>
                         )}
                     </li>
@@ -86,7 +81,7 @@ const StepProgressBar = ({ currentStep, steps }) => (
     </nav>
 );
 
-
+// Main Create Campaign Page Component
 const CreateCampaignPage = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState({
@@ -100,17 +95,13 @@ const CreateCampaignPage = () => {
     });
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
-    
-    // 3. REMOVE local notification state and useEffect
-    // const [notification, setNotification] = useState({ show: false, message: '', type: '' });
-    const { showNotification } = useNotification(); // 4. GET THE GLOBAL HOOK
-    
-    // --- STATE for 2D model interaction ---
     const [focusedField, setFocusedField] = useState(null);
 
+    const { showNotification } = useNotification();
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
 
+    // REVERTED to original 5 steps
     const steps = [
         { id: '01', name: 'The Spark' },
         { id: '02', name: 'The Story' },
@@ -118,28 +109,19 @@ const CreateCampaignPage = () => {
         { id: '04', name: 'The Visuals' },
         { id: '05', name: 'Review & Launch' },
     ];
-
-    // 5. REMOVE the local notification useEffect
-    /*
-    useEffect(() => {
-        if (notification.show) {
-            const timer = setTimeout(() => {
-                setNotification({ show: false, message: '', type: '' });
-            }, 5000);
-            return () => clearTimeout(timer);
-        }
-    }, [notification.show]);
-    */
-
-    // ... (handleChange, handleFileChange, handleRemoveFile, getTodayString, validateStep, nextStep, prevStep are all unchanged) ...
+    
+    // Handle input changes
     const handleChange = (e) => {
         const { id, value } = e.target;
         setFormData(prev => ({ ...prev, [id]: value }));
+        // Crucial for robot consciousness: set focusedField on change to update instructional text
+        setFocusedField(id);
         if (errors[id]) {
             setErrors(prev => ({ ...prev, [id]: null }));
         }
     };
-
+    
+    // Handle file uploads
     const handleFileChange = (event) => {
         const files = Array.from(event.target.files);
         setFormData(prev => ({ ...prev, mediaFiles: [...prev.mediaFiles, ...files] }));
@@ -148,6 +130,7 @@ const CreateCampaignPage = () => {
         }
     };
 
+    // Remove uploaded file
     const handleRemoveFile = (index) => {
         setFormData(prev => ({
             ...prev,
@@ -155,6 +138,7 @@ const CreateCampaignPage = () => {
         }));
     };
 
+    // Get today's date in YYYY-MM-DD format
     const getTodayString = () => {
         const today = new Date();
         const yyyy = today.getFullYear();
@@ -163,6 +147,7 @@ const CreateCampaignPage = () => {
         return `${yyyy}-${mm}-${dd}`;
     };
 
+    // Validate current step
     const validateStep = () => {
         const newErrors = {};
         switch (currentStep) {
@@ -199,78 +184,92 @@ const CreateCampaignPage = () => {
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
-    
+
+    // Navigate to next step
     const nextStep = () => {
         if (validateStep()) {
             if (currentStep < steps.length) {
                 setCurrentStep(prev => prev + 1);
+                setFocusedField(null); // Reset focus field on step change
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
     };
 
+    // Navigate to previous step
     const prevStep = () => {
         if (currentStep > 1) {
             setCurrentStep(prev => prev - 1);
+            setFocusedField(null); // Reset focus field on step change
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
-
+    
+    // Handle campaign launch
     const handleLaunchCampaign = async (event) => {
         event.preventDefault();
         if (!validateStep()) {
-            // 6. REPLACE setNotification with showNotification
             showNotification('Please review all steps, some information is missing.', 'error');
+            setFocusedField(null);
             return;
         }
-
-        // setNotification({ show: false, message: '', type: '' }); // No longer needed
+        setFocusedField('review'); // Set focus to review state for final visual check
         setIsLoading(true);
-        
+
+        // AI fraud detection check
         try {
             const aiResponse = await fetch('http://127.0.0.1:5001/predict', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ description: formData.description }),
             });
+
             if (!aiResponse.ok) throw new Error('AI server responded with an error.');
+
             const aiData = await aiResponse.json();
             if (aiData.prediction !== 'Genuine') {
-                // 7. REPLACE setNotification with showNotification
                 showNotification(`Campaign Flagged: Our AI has doubts about this campaign (${aiData.prediction}). Please revise your description.`, 'error');
                 setIsLoading(false);
-                setCurrentStep(2); // Go back to the story step
+                setCurrentStep(2);
                 return;
             }
-            // 8. REPLACE setNotification with showNotification
+
             showNotification('AI check passed! Please confirm the transaction in your wallet.', 'info');
         } catch (aiError) {
             console.error("AI prediction failed:", aiError);
-            // 9. REPLACE setNotification with showNotification
-            showNotification('Could not connect to the AI analysis server. Please try again later.', 'error');
-            setIsLoading(false);
-            return;
+            showNotification('Could not connect to the AI analysis server. Please proceed with caution.', 'warning');
         }
 
         try {
+            // Check for MetaMask
             if (!window.ethereum) {
-                // 10. REPLACE setNotification with showNotification
                 showNotification('Please install MetaMask to create a campaign!', 'error');
                 setIsLoading(false);
                 return;
             }
+
+            // Request account access
             await window.ethereum.request({ method: 'eth_requestAccounts' });
             const web3 = new Web3(window.ethereum);
             const accounts = await web3.eth.getAccounts();
             const userAddress = accounts[0];
+
+            // Initialize contract
             const contract = new web3.eth.Contract(CROWDFUNDING_ABI, CROWDFUNDING_CONTRACT_ADDRESS);
+
+            // Convert funding goal to Wei
             const targetInWei = web3.utils.toWei(formData.fundingGoal, 'ether');
+
+            // Calculate deadline timestamp
             const deadlineParts = formData.deadline.split('-').map(Number);
             const deadlineDate = new Date(deadlineParts[0], deadlineParts[1] - 1, deadlineParts[2]);
             deadlineDate.setHours(23, 59, 59, 999);
             const deadlineInSeconds = Math.floor(deadlineDate.getTime() / 1000);
 
             // TODO: Upload mediaFiles to IPFS/Filecoin and get the hash
-            const imageUrl = "https://placehold.co/600x400/94a3b8/ffffff?text=Daan+Campaign"; // Placeholder
+            const imageUrl = "https://placehold.co/600x400/94a3b8/ffffff?text=Daan+Campaign";
 
+            // Create campaign on blockchain
             await contract.methods.createCampaign(
                 userAddress,
                 formData.title,
@@ -280,231 +279,312 @@ const CreateCampaignPage = () => {
                 imageUrl
             ).send({ from: userAddress });
 
-            // 11. REPLACE setNotification with showNotification
             showNotification('Campaign created successfully! Redirecting...', 'success');
             setTimeout(() => navigate('/dashboard'), 2000);
         } catch (error) {
             console.error("Error creating campaign:", error);
-            // 12. REPLACE setNotification with showNotification
             showNotification(`Transaction failed: User denied transaction or an error occurred.`, 'error');
         } finally {
             setIsLoading(false);
         }
     };
 
-    // ... (renderStepContent is unchanged) ...
+    // Render step content
     const renderStepContent = () => {
-        // We add a key to the wrapping div to force React to re-mount
-        // and trigger the fade-in animation on each step change.
+        // UPDATED: Input Field Class - Changed bg-white/80 to bg-white/50
+        const inputBaseClass = `w-full p-4 border rounded-xl text-lg bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400`;
+        const errorInputClass = `!border-red-500 !ring-red-500`;
+        
+        // Label/Heading Text Class - Dark in Light mode, Light in Dark mode
+        const labelTextClass = `text-gray-700 dark:text-gray-200`;
+        const headingTextClass = `text-gray-900 dark:text-white`;
+        const errorTextClass = `text-red-500 dark:text-red-400`;
+
         switch (currentStep) {
             case 1: // The Spark
                 return (
-                    <div key={1} className="animate-step-in space-y-6">
-                        <Card className="p-6 sm:p-8 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow-lg">
-                            <h2 className="font-bold text-2xl mb-6 flex items-center">
-                                <Lightbulb className="h-6 w-6 mr-3 text-yellow-500" />
-                                Let's start with the basics.
-                            </h2>
-                            <div className="space-y-4">
-                                <div>
-                                    <label htmlFor="title" className="block text-lg font-semibold text-gray-800 dark:text-white mb-2">What's your campaign's title?</label>
-                                    <input type="text" id="title" value={formData.title} onChange={handleChange} placeholder="e.g., Community Garden for our Neighborhood" 
-                                        onFocus={() => setFocusedField('title')}
-                                        onBlur={() => setFocusedField(null)}
-                                        className={`w-full p-3 border ${errors.title ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg bg-gray-50 dark:bg-gray-700 text-lg`} />
-                                    {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-                                    <InputHelpBox 
-                                        title="Pro Tip"
-                                        text="A great title is short, specific, and inspiring. Think about what would make *you* want to click!"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="category" className="block text-lg font-semibold text-gray-800 dark:text-white mb-2">Which category does it fit best?</label>
-                                    <select id="category" value={formData.category} onChange={handleChange} 
-                                        onFocus={() => setFocusedField('category')}
-                                        onBlur={() => setFocusedField(null)}
-                                        className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-lg">
-                                        <option>Community</option>
-                                        <option>Health</option>
-                                        <option>Education</option>
-                                        <option>Environment</option>
-                                        <option>Technology</option>
-                                    </select>
-                                    <InputHelpBox 
-                                        title="Why categorize?"
-                                        text="This helps donors find your project. 'Community' is a great catch-all if you're not sure."
-                                    />
-                                </div>
+                    <div key={1} className="animate-fadeIn space-y-6">
+                        <h2 className={`font-bold text-3xl mb-6 flex items-center ${headingTextClass}`}>
+                            <Lightbulb className="h-8 w-8 mr-3 text-yellow-600 dark:text-yellow-400 drop-shadow-lg" />
+                            {steps[0].name}
+                        </h2>
+                        <div className="space-y-6">
+                            <div>
+                                <label htmlFor="title" className={`block text-lg font-semibold mb-3 ${labelTextClass}`}>
+                                    What's your campaign's title?
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="title" 
+                                    value={formData.title} 
+                                    onChange={handleChange} 
+                                    placeholder="e.g., Community Garden for our Neighborhood" 
+                                    onFocus={() => setFocusedField('title')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={`${inputBaseClass} ${errors.title ? errorInputClass : ''}`} 
+                                />
+                                {errors.title && <p className={`${errorTextClass} text-sm mt-2 font-medium`}>{errors.title}</p>}
+                                <InputHelpBox 
+                                    title="Pro Tip"
+                                    text="A great title is short, specific, and inspiring. Think about what would make *you* want to click!"
+                                />
                             </div>
-                        </Card>
+                            <div>
+                                <label htmlFor="category" className={`block text-lg font-semibold mb-3 ${labelTextClass}`}>
+                                    Which category does it fit best?
+                                </label>
+                                <select 
+                                    id="category" 
+                                    value={formData.category} 
+                                    onChange={handleChange} 
+                                    onFocus={() => setFocusedField('category')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={`${inputBaseClass} ${errors.category ? errorInputClass : ''} appearance-none cursor-pointer`}
+                                >
+                                    {/* Options must retain their high-contrast background for dropdown visibility */}
+                                    <option className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Community</option>
+                                    <option className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Health</option>
+                                    <option className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Education</option>
+                                    <option className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Environment</option>
+                                    <option className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Technology</option>
+                                </select>
+                                {errors.category && <p className={`${errorTextClass} text-sm mt-2 font-medium`}>{errors.category}</p>}
+                                <InputHelpBox 
+                                    title="Why categorize?"
+                                    text="This helps donors find your project. 'Community' is a great catch-all if you're not sure."
+                                />
+                            </div>
+                        </div>
                     </div>
                 );
             case 2: // The Story
                 return (
-                    <div key={2} className="animate-step-in space-y-6">
-                        <Card className="p-6 sm:p-8 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow-lg">
-                             <h2 className="font-bold text-2xl mb-6 flex items-center">
-                                <FileText className="h-6 w-6 mr-3 text-blue-500" />
-                                Tell your story.
-                            </h2>
-                             <div className="space-y-4">
-                                <div>
-                                    <label htmlFor="description" className="block text-lg font-semibold text-gray-800 dark:text-white mb-2">What's your "Why"?</label>
-                                    <textarea id="description" rows="10" value={formData.description} onChange={handleChange} placeholder="Tell your story... Why is this project important? Who will it help? Be detailed!" 
-                                        onFocus={() => setFocusedField('description')}
-                                        onBlur={() => setFocusedField(null)}
-                                        className={`w-full p-3 border ${errors.description ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg bg-gray-50 dark:bg-gray-700 text-base`} />
-                                    {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-                                    <InputHelpBox 
-                                        title="Be authentic!"
-                                        text="This is the most important part. Be personal and clear. Explain the problem and how your project is the solution. A minimum of 50 characters is recommended."
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="promptText" className="block text-lg font-semibold text-gray-800 dark:text-white mb-2">What's the one-sentence summary?</label>
-                                    <textarea id="promptText" rows="2" value={formData.promptText} onChange={handleChange} placeholder="e.g., To build a garden where local families can grow their own fresh vegetables." 
-                                        onFocus={() => setFocusedField('promptText')}
-                                        onBlur={() => setFocusedField(null)}
-                                        className={`w-full p-3 border ${errors.promptText ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg bg-gray-50 dark:bg-gray-700 text-base`} />
-                                    {errors.promptText && <p className="text-red-500 text-sm mt-1">{errors.promptText}</p>}
-                                    <InputHelpBox 
-                                        title="The 'Elevator Pitch'"
-                                        text="This short goal description is often shown on the campaign card. Make it count!"
-                                    />
-                                </div>
+                    <div key={2} className="animate-fadeIn space-y-6">
+                        <h2 className={`font-bold text-3xl mb-6 flex items-center ${headingTextClass}`}>
+                            <FileText className="h-8 w-8 mr-3 text-blue-600 dark:text-blue-400 drop-shadow-lg" />
+                            {steps[1].name}
+                        </h2>
+                        <div className="space-y-6">
+                            <div>
+                                <label htmlFor="description" className={`block text-lg font-semibold mb-3 ${labelTextClass}`}>
+                                    What's your "Why"?
+                                </label>
+                                <textarea 
+                                    id="description" 
+                                    rows="10" 
+                                    value={formData.description} 
+                                    onChange={handleChange} 
+                                    placeholder="Tell your story... Why is this project important? Who will it help? Be detailed!" 
+                                    onFocus={() => setFocusedField('description')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={`${inputBaseClass} ${errors.description ? errorInputClass : ''} resize-none`} 
+                                />
+                                {errors.description && <p className={`${errorTextClass} text-sm mt-2 font-medium`}>{errors.description}</p>}
+                                <InputHelpBox 
+                                    title="Be authentic!"
+                                    text="This is the most important part. Be personal and clear. Explain the problem and how your project is the solution. A minimum of 50 characters is recommended."
+                                />
                             </div>
-                        </Card>
+                            <div>
+                                <label htmlFor="promptText" className={`block text-lg font-semibold mb-3 ${labelTextClass}`}>
+                                    What's the one-sentence summary?
+                                </label>
+                                <textarea 
+                                    id="promptText" 
+                                    rows="2" 
+                                    value={formData.promptText} 
+                                    onChange={handleChange} 
+                                    placeholder="e.g., To build a garden where local families can grow their own fresh vegetables." 
+                                    onFocus={() => setFocusedField('promptText')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={`${inputBaseClass} ${errors.promptText ? errorInputClass : ''} resize-none`} 
+                                />
+                                {errors.promptText && <p className={`${errorTextClass} text-sm mt-2 font-medium`}>{errors.promptText}</p>}
+                                <InputHelpBox 
+                                    title="The 'Elevator Pitch'"
+                                    text="This short goal description is often shown on the campaign card. Make it count!"
+                                />
+                            </div>
+                        </div>
                     </div>
                 );
             case 3: // The Goal
                 return (
-                    <div key={3} className="animate-step-in space-y-6">
-                        <Card className="p-6 sm:p-8 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow-lg">
-                            <h2 className="font-bold text-2xl mb-6 flex items-center">
-                                <DollarSign className="h-6 w-6 mr-3 text-green-500" />
-                                Let's talk numbers.
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label htmlFor="fundingGoal" className="block text-lg font-semibold text-gray-800 dark:text-white mb-2">Funding Goal (in ETH)</label>
-                                    <input type="number" id="fundingGoal" step="0.01" value={formData.fundingGoal} onChange={handleChange} placeholder="e.g., 5" 
-                                        onFocus={() => setFocusedField('fundingGoal')}
-                                        onBlur={() => setFocusedField(null)}
-                                        className={`w-full p-3 border ${errors.fundingGoal ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg bg-gray-50 dark:bg-gray-700 text-lg`} />
-                                    {errors.fundingGoal && <p className="text-red-500 text-sm mt-1">{errors.fundingGoal}</p>}
-                                    <InputHelpBox 
-                                        title="Be realistic!"
-                                        text="Start with the minimum amount you need to get your project off the ground. You can always raise more!"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="deadline" className="block text-lg font-semibold text-gray-800 dark:text-white mb-2">When's the deadline?</label>
-                                    <input type="date" id="deadline" value={formData.deadline} onChange={handleChange} min={getTodayString()} 
-                                        onFocus={() => setFocusedField('deadline')}
-                                        onBlur={() => setFocusedField(null)}
-                                        className={`w-full p-3 border ${errors.deadline ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg bg-gray-50 dark:bg-gray-700 text-lg`} />
-                                    {errors.deadline && <p className="text-red-500 text-sm mt-1">{errors.deadline}</p>}
-                                    <InputHelpBox 
-                                        title="Create urgency"
-                                        text="Most successful campaigns run for 30-60 days. Don't set it too far in the future!"
-                                    />
-                                </div>
+                    <div key={3} className="animate-fadeIn space-y-6">
+                        <h2 className={`font-bold text-3xl mb-6 flex items-center ${headingTextClass}`}>
+                            <DollarSign className="h-8 w-8 mr-3 text-green-600 dark:text-green-400 drop-shadow-lg" />
+                            {steps[2].name}
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label htmlFor="fundingGoal" className={`block text-lg font-semibold mb-3 ${labelTextClass}`}>
+                                    Funding Goal (in ETH)
+                                </label>
+                                <input 
+                                    type="number" 
+                                    id="fundingGoal" 
+                                    step="0.01" 
+                                    value={formData.fundingGoal} 
+                                    onChange={handleChange} 
+                                    placeholder="e.g., 5" 
+                                    onFocus={() => setFocusedField('fundingGoal')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={`${inputBaseClass} ${errors.fundingGoal ? errorInputClass : ''}`} 
+                                />
+                                {errors.fundingGoal && <p className={`${errorTextClass} text-sm mt-2 font-medium`}>{errors.fundingGoal}</p>}
+                                <InputHelpBox 
+                                    title="Be realistic!"
+                                    text="Start with the minimum amount you need to get your project off the ground. You can always raise more!"
+                                />
                             </div>
-                        </Card>
+                            <div>
+                                <label htmlFor="deadline" className={`block text-lg font-semibold mb-3 ${labelTextClass}`}>
+                                    When's the deadline?
+                                </label>
+                                <input 
+                                    type="date" 
+                                    id="deadline" 
+                                    value={formData.deadline} 
+                                    onChange={handleChange} 
+                                    min={getTodayString()} 
+                                    onFocus={() => setFocusedField('deadline')}
+                                    onBlur={() => setFocusedField(null)}
+                                    className={`${inputBaseClass} ${errors.deadline ? errorInputClass : ''}`} 
+                                />
+                                {errors.deadline && <p className={`${errorTextClass} text-sm mt-2 font-medium`}>{errors.deadline}</p>}
+                                <InputHelpBox 
+                                    title="Create urgency"
+                                    text="Most successful campaigns run for 30-60 days. Don't set it too far in the future!"
+                                />
+                            </div>
+                        </div>
                     </div>
                 );
             case 4: // The Visuals
                 return (
-                    <div key={4} className="animate-step-in space-y-6">
-                        <Card className="p-6 sm:p-8 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow-lg">
-                            <h2 className="font-bold text-2xl mb-6 flex items-center">
-                                <ImagePlus className="h-6 w-6 mr-3 text-purple-500" />
-                                Show us your vision.
-                            </h2>
-                            <div>
-                                <label className="block text-lg font-semibold text-gray-800 dark:text-white mb-2">Campaign Media</label>
-                                <div className={`border-2 border-dashed ${errors.media ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50`} 
-                                    onClick={() => {
-                                        fileInputRef.current.click();
-                                        setFocusedField('media'); // <-- Set focus
-                                    }}
-                                    onFocus={() => setFocusedField('media')} // <-- Set focus
-                                    onBlur={() => setFocusedField(null)}
-                                    tabIndex={0} // Make it focusable
-                                >
-                                    <ImagePlus className="h-12 w-12 mx-auto text-gray-400" />
-                                    <p className="mt-2 text-lg text-gray-600 dark:text-gray-400"><span className="font-semibold text-blue-600 dark:text-blue-400">Upload Images & Videos</span></p>
-                                    <p className="text-sm text-gray-500">A great cover image is essential.</p>
-                                    <input type="file" ref={fileInputRef} onChange={handleFileChange} multiple accept="image/*,video/*" className="hidden"/>
-                                </div>
-                                {errors.media && <p className="text-red-500 text-sm mt-1">{errors.media}</p>}
-                                <InputHelpBox 
-                                    title="A picture is worth..."
-                                    text="Upload at least one high-quality image. A short video explaining your project is even better!"
+                    <div key={4} className="animate-fadeIn space-y-6">
+                        <h2 className={`font-bold text-3xl mb-6 flex items-center ${headingTextClass}`}>
+                            <ImagePlus className="h-8 w-8 mr-3 text-purple-600 dark:text-purple-400 drop-shadow-lg" />
+                            {steps[3].name}
+                        </h2>
+                        <div>
+                            <label className={`block text-lg font-semibold mb-3 ${labelTextClass}`}>
+                                Campaign Media
+                            </label>
+                            <div 
+                                // Light theme: bg-white/50
+                                className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer bg-white/50 dark:bg-gray-800/50 hover:bg-gray-100/70 dark:hover:bg-gray-800/80 transition-all duration-200 ${errors.media ? 'border-red-500' : 'border-gray-300 dark:border-gray-600 hover:border-blue-500'}`}
+                                onClick={() => {
+                                    fileInputRef.current.click();
+                                    setFocusedField('media');
+                                }}
+                                onFocus={() => setFocusedField('media')}
+                                onBlur={() => setFocusedField(null)}
+                                tabIndex={0}
+                            >
+                                <ImagePlus className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                                <p className={`mt-2 text-xl mb-2 text-gray-700 dark:text-gray-200`}>
+                                    <span className="font-semibold text-blue-600 dark:text-blue-400">Upload Images & Videos</span>
+                                </p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">A great cover image is essential.</p>
+                                <input 
+                                    type="file" 
+                                    ref={fileInputRef} 
+                                    onChange={handleFileChange} 
+                                    multiple 
+                                    accept="image/*,video/*" 
+                                    className="hidden"
                                 />
-                                {formData.mediaFiles.length > 0 && (
-                                    <div className="mt-6">
-                                        <h4 className="font-semibold mb-2">Uploaded Files:</h4>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                            {formData.mediaFiles.map((file, index) => (
-                                                <div key={index} className="relative aspect-square group">
-                                                    {file.type.startsWith('image/') ? <img src={URL.createObjectURL(file)} alt={`preview ${index}`} className="w-full h-full object-cover rounded-lg shadow-md"/> : <video src={URL.createObjectURL(file)} className="w-full h-full object-cover rounded-lg shadow-md"/>}
-                                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveFile(index)} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
                             </div>
-                        </Card>
+                            {errors.media && <p className={`${errorTextClass} text-sm mt-2 font-medium`}>{errors.media}</p>}
+                            <InputHelpBox 
+                                title="A picture is worth..."
+                                text="Upload at least one high-quality image. A short video explaining your project is even better!"
+                            />
+                            {formData.mediaFiles.length > 0 && (
+                                <div className="mt-6">
+                                    <h4 className={`font-semibold mb-3 ${labelTextClass}`}>Uploaded Files:</h4>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                        {formData.mediaFiles.map((file, index) => (
+                                            <div key={index} className="relative aspect-square group">
+                                                {file.type.startsWith('image/') ? 
+                                                    <img 
+                                                        src={URL.createObjectURL(file)} 
+                                                        alt={`preview ${index}`} 
+                                                        className="w-full h-full object-cover rounded-lg shadow-lg border border-gray-300 dark:border-gray-700" 
+                                                    /> : 
+                                                    <video 
+                                                        src={URL.createObjectURL(file)} 
+                                                        className="w-full h-full object-cover rounded-lg shadow-lg border border-gray-300 dark:border-gray-700" 
+                                                    />
+                                                }
+                                                <Button 
+                                                    variant="danger" 
+                                                    size="icon" 
+                                                    onClick={() => handleRemoveFile(index)} 
+                                                    className="absolute top-2 right-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 );
             case 5: // Review & Launch
                 return (
-                    <div key={5} className="animate-step-in space-y-6">
-                        <Card className="p-6 sm:p-8 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow-lg">
-                            <h2 className="font-bold text-2xl mb-6 flex items-center">
-                                <CheckCircle className="h-6 w-6 mr-3 text-green-500" />
-                                One final look.
-                            </h2>
-                            <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">Does everything look correct? You're one step away from launching your campaign to the world.</p>
-                            
-                            <div className="space-y-4 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                                <h3 className="font-bold text-xl text-gray-800 dark:text-white">Your Campaign Summary</h3>
-                                <div className="flow-root">
-                                    <dl className="-my-4 divide-y divide-gray-200 dark:divide-gray-700">
-                                        <div className="flex items-center justify-between py-4">
-                                            <dt className="text-base font-medium text-gray-600 dark:text-gray-400">Title</dt>
-                                            <dd className="text-base font-semibold text-gray-900 dark:text-white text-right">{formData.title}</dd>
-                                        </div>
-                                        <div className="flex items-center justify-between py-4">
-                                            <dt className="text-base font-medium text-gray-600 dark:text-gray-400">Category</dt>
-                                            <dd className="text-base font-semibold text-gray-900 dark:text-white text-right">{formData.category}</dd>
-                                        </div>
-                                        <div className="flex items-center justify-between py-4">
-                                            <dt className="text-base font-medium text-gray-600 dark:text-gray-400">Funding Goal</dt>
-                                            <dd className="text-base font-semibold text-gray-900 dark:text-white text-right">{formData.fundingGoal} ETH</dd>
-                                        </div>
-                                        <div className="flex items-center justify-between py-4">
-                                            <dt className="text-base font-medium text-gray-600 dark:text-gray-400">Deadline</dt>
-                                            <dd className="text-base font-semibold text-gray-900 dark:text-white text-right">{new Date(formData.deadline).toLocaleDateString()}</dd>
-                                        </div>
-                                        <div className="flex items-center justify-between py-4">
-                                            <dt className="text-base font-medium text-gray-600 dark:text-gray-400">Media Files</dt>
-                                            <dd className="text-base font-semibold text-gray-900 dark:text-white text-right">{formData.mediaFiles.length} file(s)</dd>
-                                        </div>
-                                        <div className="flex flex-col py-4">
-                                            <dt className="text-base font-medium text-gray-600 dark:text-gray-400 mb-2">Description</dt>
-                                            <dd className="text-sm font-normal text-gray-700 dark:text-gray-300 whitespace-pre-wrap max-h-32 overflow-y-auto bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
-                                                {formData.description}
-                                            </dd>
-                                        </div>
-                                    </dl>
-                                </div>
+                    <div key={5} className="animate-fadeIn space-y-6">
+                        <h2 className={`font-bold text-3xl mb-6 flex items-center ${headingTextClass}`}>
+                            <CheckCircle className="h-8 w-8 mr-3 text-green-600 dark:text-green-400 drop-shadow-lg" />
+                            {steps[4].name}
+                        </h2>
+                        <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
+                            Does everything look correct? You're one step away from launching your campaign to the world.
+                        </p>
+                        
+                        {/* Review Summary Box Styling - Translucent background/text for light/dark theme */}
+                        <div className="space-y-4 rounded-xl border border-gray-300/80 p-6 bg-gray-100/70 dark:bg-gray-800/70 backdrop-blur-sm shadow-xl">
+                            <h3 className={`font-bold text-2xl mb-4 ${headingTextClass}`}>Your Campaign Summary</h3>
+                            <div className="flow-root">
+                                <dl className="divide-y divide-gray-300 dark:divide-gray-700">
+                                    <div className="flex items-center justify-between py-3">
+                                        <dt className="text-base font-medium text-gray-600 dark:text-gray-300">Title</dt>
+                                        <dd className="text-base font-semibold text-gray-900 dark:text-white text-right max-w-xs truncate">{formData.title}</dd>
+                                    </div>
+                                    <div className="flex items-center justify-between py-3">
+                                        <dt className="text-base font-medium text-gray-600 dark:text-gray-300">Category</dt>
+                                        <dd className="text-base font-semibold text-gray-900 dark:text-white text-right">{formData.category}</dd>
+                                    </div>
+                                    <div className="flex items-center justify-between py-3">
+                                        <dt className="text-base font-medium text-gray-600 dark:text-gray-300">Funding Goal</dt>
+                                        <dd className="text-base font-semibold text-gray-900 dark:text-white text-right">{formData.fundingGoal} ETH</dd>
+                                    </div>
+                                    <div className="flex items-center justify-between py-3">
+                                        <dt className="text-base font-medium text-gray-600 dark:text-gray-300">Deadline</dt>
+                                        <dd className="text-base font-semibold text-gray-900 dark:text-white text-right">
+                                            {formData.deadline ? new Date(formData.deadline).toLocaleDateString() : 'Not set'}
+                                        </dd>
+                                    </div>
+                                    
+                                    {/* REMOVED: ALLOCATION REVIEW */}
+                                    {/* REMOVED: MILESTONE REVIEW */}
+
+                                    <div className="flex items-center justify-between py-3">
+                                        <dt className="text-base font-medium text-gray-600 dark:text-gray-300">Media Files</dt>
+                                        <dd className="text-base font-semibold text-gray-900 dark:text-white text-right">{formData.mediaFiles.length} file(s)</dd>
+                                    </div>
+                                    <div className="flex flex-col py-3">
+                                        <dt className="text-base font-medium text-gray-600 dark:text-gray-300 mb-2">Description</dt>
+                                        <dd className="text-sm font-normal text-gray-700 dark:text-gray-300 whitespace-pre-wrap max-h-32 overflow-y-auto p-4 rounded-lg border border-gray-300 dark:border-gray-700/50 bg-white/50 dark:bg-gray-800/30 custom-scrollbar">
+                                            {formData.description}
+                                        </dd>
+                                    </div>
+                                </dl>
                             </div>
-                        </Card>
+                        </div>
                     </div>
                 );
             default:
@@ -513,85 +593,77 @@ const CreateCampaignPage = () => {
     };
 
     return (
-        <main className="container mx-auto px-4 pt-32 pb-16 min-h-screen">
-            {/* 13. REMOVE the local notification rendering */}
-            {/*
-            {notification.show && (
-                <div className="max-w-6xl mx-auto mb-4">
-                    <Notification 
-                        message={notification.message} 
-                        type={notification.type}
-                        onClose={() => setNotification({ show: false, message: '', type: '' })}
-                    />
-                </div>
-            )}
-            */}
-            
-            {/* --- Main Content Area --- */}
-            <div className="max-w-6xl mx-auto">
-                {/* --- Progress Bar (Full Width) --- */}
-                <div className="mb-12">
-                    <StepProgressBar currentStep={currentStep} steps={steps} />
-                </div>
+        <main className="min-h-screen relative overflow-x-hidden">
+            {/* 1. FIXED FULL-PAGE SPLINE BACKGROUND (Robot is here, shifted left and always active) */}
+            <FullPageSpline />
 
-                {/* --- Two-Column Layout --- */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+            {/* 2. FIXED SPLINE VISUAL GUIDE OVERLAY (Instructional text layer on the left) */}
+            <SplineCampaignVisual focusedField={focusedField} />
+            
+            {/* 3. SCROLLABLE CONTENT CONTAINER (z-20 and pushed to the right half) */}
+            <div className="relative z-20 w-full min-h-screen">
+                <div className="max-w-6xl mx-auto px-4 pt-32 pb-16">
                     
-                    {/* --- 2. LEFT COLUMN (The Spline Visual) --- */}
-                    {/* Finalized layout: Large, sticky, no padding/border */}
-                    <div className="w-full h-[60vh] lg:h-full lg:min-h-[800px] lg:sticky lg:top-32 flex items-center justify-center">
-                        {/* REPLACED FormWatcher with SplineCampaignVisual */}
-                        <SplineCampaignVisual focusedField={focusedField} />
+                    {/* --- Progress Bar --- */}
+                    <div className="w-full lg:ml-[50%] lg:w-1/2 mb-8">
+                        {/* THEME UPDATED: Changed bg-white/80 to bg-white/50 */}
+                        <Card className="p-6 bg-white/50 dark:bg-black/30 backdrop-blur-2xl shadow-2xl border-gray-300/50 dark:border-white/10">
+                            <StepProgressBar currentStep={currentStep} steps={steps} />
+                        </Card>
                     </div>
 
-                    {/* --- RIGHT COLUMN (The "Form") --- */}
-                    <div className="w-full">
-                        <form onSubmit={handleLaunchCampaign} noValidate>
-                            {/* --- Step Content --- */}
-                            <div className="min-h-[500px]">
-                                {renderStepContent()}
-                            </div>
+                    {/* --- The Floating Form Card (Steps Content) --- */}
+                    <div className="w-full lg:ml-[50%] lg:w-1/2">
+                         {/* THEME UPDATED: Changed bg-white/80 to bg-white/50 */}
+                         <Card className="p-8 sm:p-12 lg:p-16 bg-white/50 dark:bg-gray-900/50 backdrop-blur-2xl shadow-4xl shadow-blue-500/10 dark:shadow-purple-900/40 border-gray-300/50 dark:border-white/10">
+                            <form onSubmit={handleLaunchCampaign} noValidate>
+                                {/* --- Step Content --- */}
+                                <div className="min-h-[500px]">
+                                    {renderStepContent()}
+                                </div>
 
-                            {/* --- Navigation Buttons --- */}
-                            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                                <Button 
-                                    type="button"
-                                    variant="outline"
-                                    onClick={prevStep}
-                                    disabled={currentStep === 1 || isLoading}
-                                    className={`transition-all ${currentStep === 1 ? 'opacity-0 invisible' : 'opacity-100 visible'}`}
-                                >
-                                    <ArrowLeft className="h-4 w-4 mr-2" />
-                                    Back
-                                </Button>
-                                
-                                {currentStep < steps.length ? (
+                                {/* --- Navigation Buttons --- */}
+                                {/* Border color is dark in light mode, gray in dark mode */}
+                                <div className="mt-8 pt-6 border-t border-gray-300 dark:border-gray-700 flex justify-between items-center">
                                     <Button 
                                         type="button"
-                                        variant="default"
-                                        size="lg"
-                                        onClick={nextStep}
+                                        variant="outline"
+                                        onClick={prevStep}
+                                        disabled={currentStep === 1 || isLoading}
+                                        className={`transition-all ${currentStep === 1 ? 'opacity-0 invisible' : 'opacity-100 visible'}`}
                                     >
-                                        Next
-                                        <ArrowRight className="h-4 w-4 ml-2" />
+                                        <ArrowLeft className="h-4 w-4 mr-2" />
+                                        Back
                                     </Button>
-                                ) : (
-                                    <Button 
-                                        type="submit"
-                                        size="lg"
-                                        className="bg-green-600 hover:bg-green-700 focus:ring-green-500"
-                                        disabled={isLoading}
-                                    >
-                                        {isLoading ? <LoaderCircle className="animate-spin" /> : (
-                                            <>
-                                                <Rocket className="h-5 w-5 mr-2" />
-                                                Launch Campaign
-                                            </>
-                                        )}
-                                    </Button>
-                                )}
-                            </div>
-                        </form>
+                                    
+                                    {currentStep < steps.length ? (
+                                        <Button 
+                                            type="button"
+                                            variant="default"
+                                            size="lg"
+                                            onClick={nextStep}
+                                        >
+                                            Next
+                                            <ArrowRight className="h-4 w-4 ml-2" />
+                                        </Button>
+                                    ) : (
+                                        <Button 
+                                            type="submit"
+                                            size="lg"
+                                            className="bg-green-600 hover:bg-green-700 focus:ring-green-500"
+                                            disabled={isLoading}
+                                        >
+                                            {isLoading ? <LoaderCircle className="animate-spin" /> : (
+                                                <>
+                                                    <Rocket className="h-5 w-5 mr-2" />
+                                                    Launch Campaign
+                                                </>
+                                            )}
+                                        </Button>
+                                    )}
+                                </div>
+                            </form>
+                         </Card>
                     </div>
                 </div>
             </div>

@@ -14,9 +14,10 @@ export const UserProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [followedOrganizers, setFollowedOrganizers] = useState([]); // NEW STATE
     const { showNotification } = useNotification(); // 2. GET THE FUNCTION
 
-    // Restore session from localStorage
+    // Restore session and followed list from localStorage
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
@@ -24,6 +25,12 @@ export const UserProvider = ({ children }) => {
             setCurrentUser(user);
             setIsAuthenticated(true);
         }
+
+        const storedFollows = localStorage.getItem("followedOrganizers");
+        if (storedFollows) {
+            setFollowedOrganizers(JSON.parse(storedFollows));
+        }
+
         setLoading(false);
     }, []);
 
@@ -66,8 +73,37 @@ const logout = async () => {
         localStorage.setItem("user", JSON.stringify(updatedUser)); // keep synced
     };
 
+    // NEW: Follow/Unfollow Logic
+    const followOrganizer = (organizerAddress) => {
+        setFollowedOrganizers(prev => {
+            const newState = [...prev, organizerAddress];
+            localStorage.setItem("followedOrganizers", JSON.stringify(newState));
+            return newState;
+        });
+        showNotification("You are now following this organizer!", "success");
+    };
+
+    const unfollowOrganizer = (organizerAddress) => {
+        setFollowedOrganizers(prev => {
+            const newState = prev.filter(addr => addr !== organizerAddress);
+            localStorage.setItem("followedOrganizers", JSON.stringify(newState));
+            return newState;
+        });
+        showNotification("Unfollowed organizer.", "info");
+    };
+
     return (
-        <UserContext.Provider value={{ currentUser, isAuthenticated,loading, updateUser, logout, login }}>
+        <UserContext.Provider value={{
+             currentUser, 
+             isAuthenticated,
+             loading, 
+             updateUser, 
+             logout, 
+             login,
+             followedOrganizers, // NEW
+             followOrganizer,    // NEW
+             unfollowOrganizer,  // NEW
+        }}>
             {children}
         </UserContext.Provider>
     );

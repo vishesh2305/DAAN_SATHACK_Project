@@ -2,54 +2,67 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ShieldCheck, LoaderCircle, Lock, Heart, User, Calendar, Home, Mail, Camera, AlertTriangle, Info } from 'lucide-react';
+// Ensure all Lucide icons, including Sun and Moon, are imported
+import { ShieldCheck, LoaderCircle, Lock, User, Mail, Camera, AlertTriangle, Info, Sun, Moon } from 'lucide-react'; 
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import { useUser } from '../contexts/UserProvider';
-import { useNotification } from '../contexts/NotificationProvider'; // 1. IMPORT
+import { useNotification } from '../contexts/NotificationProvider';
+import AuthLayout from '../components/AuthLayout';
+import { useTheme } from '../contexts/ThemeProvider'; // <-- CORRECT IMPORT
 
-// ... (InputGroup and VerificationStatus components are unchanged) ...
+// --- STYLED HELPER COMPONENTS (Making all text dark for contrast on the light panel) ---
+
 const InputGroup = ({ icon, children }) => (
     <div className="relative flex items-center">
+        {/* Icons are explicitly dark grey in all modes for contrast */}
         <span className="absolute left-3 text-gray-400 dark:text-gray-500">
             {icon}
         </span>
-        {React.cloneElement(children, { className: `${children.props.className} pl-10` })}
+        {/* Input is now clean, light, and high-contrast */}
+        {React.cloneElement(children, { 
+            className: `${children.props.className} pl-10 h-12 text-base 
+                       !bg-white border-gray-300 text-gray-900 
+                       placeholder-gray-500 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500` 
+        })}
     </div>
 );
 
 const VerificationStatus = ({ message, isVerifying, isVerified }) => {
     let Icon = Info;
-    let colorClass = 'text-gray-500 dark:text-gray-400';
+    let colorClass = 'text-gray-700 border-gray-300 bg-gray-100 dark:bg-gray-200 dark:border-gray-400';
 
     if (isVerifying) {
         Icon = () => <LoaderCircle className="animate-spin h-5 w-5" />;
-        colorClass = 'text-blue-600 dark:text-blue-400';
+        colorClass = 'text-blue-700 border-blue-400 bg-blue-100 dark:bg-blue-200 dark:border-blue-500';
     } else if (isVerified) {
         Icon = ShieldCheck;
-        colorClass = 'text-green-600 dark:text-green-400';
+        colorClass = 'text-green-700 border-green-400 bg-green-100 dark:bg-green-200 dark:border-green-500';
     } else if (message.toLowerCase().includes('failed') || message.toLowerCase().includes('error') || message.toLowerCase().includes('denied')) {
         Icon = AlertTriangle;
-        colorClass = 'text-red-600 dark:text-red-400';
+        colorClass = 'text-red-700 border-red-400 bg-red-100 dark:bg-red-200 dark:border-red-500';
     }
 
+    // LIGHT STYLING: Clearly defined box with high contrast
     return (
-        <div className={`flex items-center justify-center gap-2 text-sm p-2 rounded-md bg-gray-50 dark:bg-gray-800/50 min-h-[40px] ${colorClass}`}>
-            <Icon className="h-5 w-5" />
-            <p>{message}</p>
+        <div className={`flex items-center justify-start gap-2 text-sm p-3 rounded-lg border min-h-[50px] font-semibold ${colorClass}`}>
+            <Icon className="h-5 w-5 flex-shrink-0" />
+            <p className="text-left">{message}</p>
         </div>
     );
 };
 
+
+// --- AUTH LOGIC & RENDERING ---
 
 const AuthPage = () => {
     const [isSignUp, setIsSignUp] = useState(true);
     const navigate = useNavigate();
     const location = useLocation();
     const { login } = useUser();
-    const { showNotification } = useNotification(); // 2. GET THE FUNCTION
+    const { showNotification } = useNotification();
+    const { theme, toggleTheme } = useTheme(); // <-- USE THEME HOOK
 
-    // ... (state, refs, useEffects are unchanged) ...
     const [formData, setFormData] = useState({
         fullName: '',
         dob: '',
@@ -71,7 +84,7 @@ const AuthPage = () => {
     const canvasRef = useRef(null);
     const streamRef = useRef(null);
 
-    // Fetch coordinates from IP
+    // --- Original Logic (UNCHANGED) ---
     useEffect(() => {
         const fetchLocation = async () => {
             try {
@@ -106,7 +119,8 @@ const AuthPage = () => {
 
     useEffect(() => {
         const startWebcam = async () => {
-            if (showWebcam && navigator.mediaDevices?.getUserMedia) {
+            // FIX: Added videoRef.current check to prevent race condition before element mounts
+            if (showWebcam && navigator.mediaDevices?.getUserMedia && videoRef.current) { 
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                     streamRef.current = stream;
@@ -124,7 +138,6 @@ const AuthPage = () => {
         return () => stopWebcam();
     }, [showWebcam, stopWebcam]);
 
-    // ... (handleDocImageChange, handleFormInputChange, handleVerification are unchanged) ...
     const handleDocImageChange = (event) => {
         const file = event.target.files?.[0];
         if (file) {
@@ -245,17 +258,14 @@ const AuthPage = () => {
                 login(data.user || formData);
                 navigate("/dashboard");
             } else {
-                // 3. REPLACE ALERT
                 showNotification(`${isLogin ? 'Login' : 'Signup'} failed: ${data.error}`, "error");
             }
         } catch (err) {
             console.error(`${isLogin ? 'Login' : 'Signup'} error:`, err);
-            // 4. REPLACE ALERT
             showNotification(`${isLogin ? 'Login' : 'Signup'} failed due to a network error.`, "error");
         }
     };
     
-    // ... (resetAuthState, renderVerificationStep, renderAuthForm, and return are unchanged) ...
     const resetAuthState = (targetIsSignUp) => {
         setIsSignUp(targetIsSignUp);
         setIsVerified(false);
@@ -269,20 +279,24 @@ const AuthPage = () => {
     };
 
 
+    // --- RENDER METHODS ---
+
     const renderVerificationStep = () => (
         <div className="space-y-4 animate-fade-in">
-            <h3 className="font-semibold text-center text-lg flex items-center justify-center gap-2">
-                <ShieldCheck className="h-6 w-6 text-blue-500" />
+            {/* FUNKY TEXT: Blue/Purple Gradient, bold, drop shadow */}
+            <h3 className="font-extrabold text-center text-2xl flex items-center justify-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-purple-800 drop-shadow-md">
+                <ShieldCheck className="h-6 w-6 text-blue-600 dark:text-blue-700" />
                 Step 1: Identity & Face Verification
             </h3>
 
             <div>
-                <label htmlFor="doc-upload" className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Upload Aadhaar Card</label>
-                <label htmlFor="doc-upload" className="flex flex-col items-center justify-center w-full h-32 px-4 transition bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md cursor-pointer hover:border-blue-500 dark:hover:border-blue-400">
+                <label htmlFor="doc-upload" className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-800">Upload Aadhaar Card</label>
+                {/* HIGH-CONTRAST UPLOAD BOX - Theme-aware border/background */}
+                <label htmlFor="doc-upload" className="flex flex-col items-center justify-center w-full h-32 px-4 transition bg-gray-100 dark:bg-gray-200 border-2 border-gray-300 dark:border-blue-400/50 border-dashed rounded-lg cursor-pointer hover:border-blue-500 shadow-sm">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Camera className="w-8 h-8 mb-2 text-gray-500 dark:text-gray-400" />
-                        <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
-                            {docImage ? <span className="font-semibold">{docImage.name}</span> : <span><span className="font-semibold">Click to upload</span> or drag and drop</span>}
+                        <Camera className="w-8 h-8 mb-2 text-gray-500 dark:text-gray-600" />
+                        <p className="mb-1 text-sm text-gray-500">
+                            {docImage ? <span className="font-semibold text-gray-900">{docImage.name}</span> : <span><span className="font-semibold text-blue-600">Click to upload</span> or drag and drop</span>}
                         </p>
                     </div>
                     <input id="doc-upload" type="file" accept="image/*" onChange={handleDocImageChange} className="opacity-0 w-0 h-0" />
@@ -291,13 +305,18 @@ const AuthPage = () => {
             
             {showWebcam && (
                 <div className="space-y-2 animate-fade-in">
-                     <p className="text-sm font-medium text-center text-gray-700 dark:text-gray-300">Live Selfie Preview</p>
-                    <video ref={videoRef} autoPlay playsInline muted className="w-full rounded-lg border-2 dark:border-gray-700 aspect-video object-cover bg-gray-200 dark:bg-gray-800" />
+                     <p className="text-sm font-semibold text-center text-gray-700 dark:text-gray-800">Live Selfie Preview</p>
+                    {/* Dark background for video, light card border */}
+                    <video ref={videoRef} autoPlay playsInline muted className="w-full rounded-lg border-2 border-gray-300 dark:border-blue-500/70 aspect-video object-cover bg-gray-900/90 shadow-inner" />
                     <canvas ref={canvasRef} className="hidden"></canvas>
                 </div>
             )}
 
-            <Button onClick={handleVerification} disabled={!docImage || isVerifying || !showWebcam} className="w-full !mt-6">
+            <Button 
+                onClick={handleVerification} 
+                disabled={!docImage || isVerifying || !showWebcam} 
+                className="w-full !mt-6 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/40 font-bold"
+            >
                 {isVerifying ? (
                     <>
                         <LoaderCircle className="animate-spin mr-2 h-5 w-5" /> Verifying...
@@ -316,64 +335,85 @@ const AuthPage = () => {
     const renderAuthForm = () => (
         <form onSubmit={handleAuthSubmit} className="space-y-4 animate-fade-in">
             {isSignUp && (
-                 <div className="p-4 border rounded-lg dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 space-y-3">
-                    <h3 className="font-semibold text-center text-lg flex items-center justify-center gap-2 mb-3">
-                         <User className="h-6 w-6 text-green-500" />
+                 <div className="p-4 border rounded-lg border-blue-400/50 bg-blue-50/70 dark:bg-blue-200/50 space-y-3 shadow-inner">
+                    {/* FUNKY TEXT: Green/Teal Gradient, bold, drop shadow */}
+                    <h3 className="font-extrabold text-center text-2xl flex items-center justify-center gap-2 mb-3 text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-teal-600 drop-shadow-md">
+                         <User className="h-6 w-6 text-green-600 dark:text-green-700" />
                          Step 2: Complete Your Profile
                     </h3>
                     <div className="text-sm">
-                        <label className="font-medium text-gray-500 dark:text-gray-400">Full Name</label>
-                        <p className="p-2 rounded-md bg-white dark:bg-gray-700/50 mt-1">{formData.fullName || 'N/A'}</p>
+                        <label className="font-semibold text-gray-600 dark:text-gray-700">Full Name</label>
+                        {/* HIGH-CONTRAST DATA DISPLAY - Theme-aware background */}
+                        <p className="p-2 rounded-lg bg-white dark:bg-gray-100 text-gray-900 font-medium mt-1 border border-gray-300 shadow-sm">{formData.fullName || 'N/A'}</p>
                     </div>
                      <div className="text-sm">
-                        <label className="font-medium text-gray-500 dark:text-gray-400">Date of Birth</label>
-                        <p className="p-2 rounded-md bg-white dark:bg-gray-700/50 mt-1">{formData.dob || 'N/A'}</p>
+                        <label className="font-semibold text-gray-600 dark:text-gray-700">Date of Birth</label>
+                        <p className="p-2 rounded-lg bg-white dark:bg-gray-100 text-gray-900 font-medium mt-1 border border-gray-300 shadow-sm">{formData.dob || 'N/A'}</p>
                     </div>
                       <div className="text-sm">
-                        <label className="font-medium text-gray-500 dark:text-gray-400">Address</label>
-                        <p className="p-2 rounded-md bg-white dark:bg-gray-700/50 mt-1">{formData.address || 'N/A'}</p>
+                        <label className="font-semibold text-gray-600 dark:text-gray-700">Address</label>
+                        <p className="p-2 rounded-lg bg-white dark:bg-gray-100 text-gray-900 font-medium mt-1 border border-gray-300 shadow-sm">{formData.address || 'N/A'}</p>
                     </div>
                  </div>
             )}
 
             <InputGroup icon={<Mail size={18} />}>
-                <input name="email" type="email" placeholder="Email Address" value={formData.email} onChange={handleFormInputChange} required className="block w-full p-3 border rounded-md dark:bg-gray-800 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500" />
+                <input name="email" type="email" placeholder="Email Address" value={formData.email} onChange={handleFormInputChange} required className="block w-full p-3 border rounded-lg focus:ring-2 focus:ring-offset-2 focus:ring-offset-white" />
             </InputGroup>
 
             <InputGroup icon={<Lock size={18} />}>
-                <input name="password" type="password" placeholder="Password" onChange={handleFormInputChange} required className="block w-full p-3 border rounded-md dark:bg-gray-800 dark:border-gray-700 focus:ring-blue-500 focus:border-blue-500" />
+                <input name="password" type="password" placeholder="Password" onChange={handleFormInputChange} required className="block w-full p-3 border rounded-lg focus:ring-2 focus:ring-offset-2 focus:ring-offset-white" />
             </InputGroup>
 
-            <Button type="submit" size="lg" className="w-full !mt-6" disabled={isSignUp && !isVerified}>
+            <Button type="submit" size="lg" className="w-full !mt-6 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/40 font-bold" disabled={isSignUp && !isVerified}>
                 {isSignUp ? 'Create Account & Sign In' : 'Sign In'}
             </Button>
         </form>
     );
 
     return (
-        <main className="min-h-screen  flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
-            <Card className=" p-4 w-full max-w-md shadow-xl transition-all duration-500 ease-in-out">
-                <div className="text-center mb-8">
-                    <Heart className="mx-auto h-12 w-12 text-blue-600" />
-                    <h2 className="mt-4 text-3xl font-bold text-gray-900 dark:text-white">{isSignUp ? 'Create Your Secure Account' : 'Welcome Back'}</h2>
-                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                        {isSignUp ? 'Verify your identity to get started.' : 'Sign in to access your account.'}
+        <main className="min-h-screen flex items-center justify-center p-4">
+            
+            {/* Two-Panel Layout Container */}
+            <AuthLayout isSignUpMode={isSignUp}>
+                
+                {/* --- THEME TOGGLE BUTTON --- */}
+                {/* Positioned absolutely within the light form panel content */}
+                <button
+                    onClick={toggleTheme}
+                    className="absolute top-6 right-6 p-2 rounded-full text-gray-700 dark:text-gray-800 bg-gray-100/50 dark:bg-gray-200/80 border border-gray-300 dark:border-gray-500 hover:bg-gray-100 transition-colors z-20 shadow-md"
+                    title="Toggle Theme"
+                >
+                    {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                </button>
+                {/* --------------------------- */}
+
+                <header className="mb-8">
+                    {/* FUNKY TEXT: Main Heading with Gradient */}
+                    <h2 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-purple-800 drop-shadow-sm">
+                        {isSignUp ? 'Verify Your Identity' : 'Secure Sign-In'}
+                    </h2>
+                    <p className="text-md text-gray-600 dark:text-gray-700 mt-1">
+                        {isSignUp ? 'Your first step to a transparent future.' : 'Access your decentralized dashboard.'}
                     </p>
+                </header>
+                
+                {/* FIX: Removed flex-grow flex flex-col justify-center classes for content compatibility */}
+                <div className="flex flex-col"> 
+                    {isSignUp ? (
+                        isVerified ? renderAuthForm() : renderVerificationStep()
+                    ) : (
+                        renderAuthForm()
+                    )}
                 </div>
 
-                {isSignUp ? (
-                    isVerified ? renderAuthForm() : renderVerificationStep()
-                ) : (
-                    renderAuthForm()
-                )}
-
-                <p className="text-center text-sm text-gray-500 mt-8">
+                <p className="text-center text-sm text-gray-500 dark:text-gray-600 mt-8">
                     {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-                    <button onClick={() => resetAuthState(!isSignUp)} className="font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 ml-1">
+                    <button onClick={() => resetAuthState(!isSignUp)} className="font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-700 dark:hover:text-blue-600 ml-1">
                         {isSignUp ? 'Sign In' : 'Sign Up'}
                     </button>
                 </p>
-            </Card>
+            </AuthLayout>
         </main>
     );
 };

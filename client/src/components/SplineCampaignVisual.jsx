@@ -1,62 +1,58 @@
 // src/components/SplineCampaignVisual.jsx
 import React from 'react';
-// --- CORRECTED IMPORTS: Use './' for sibling components ---
-import SplineScene from "./SplineScene"; 
-import Spotlight from "./common/Spotlight"; 
-// --------------------------------------------------------
+// We no longer import SplineScene or Spotlight here, only utilities
 import { Lightbulb, FileText, DollarSign, ImagePlus, CheckCircle } from 'lucide-react'; 
 
 // Helper component to visually highlight the current step
 const StepItem = ({ icon: Icon, label, isFocused }) => (
-    <div className={`flex items-center space-x-3 transition-all duration-300 ${isFocused ? 'text-blue-400 scale-[1.03]' : 'text-neutral-500 dark:text-gray-600'}`}>
-        <Icon className={`h-5 w-5 ${isFocused ? 'text-blue-400' : 'text-neutral-500 dark:text-gray-600'}`}/>
-        <span className={`text-sm font-medium ${isFocused ? 'text-white dark:text-white' : 'text-neutral-500 dark:text-gray-600'}`}>{label}</span>
+    // Enhanced focus effect: added drop-shadow-xl for better visibility
+    <div className={`flex items-center space-x-3 transition-all duration-300 ${isFocused ? 'scale-[1.05] drop-shadow-xl' : 'opacity-70'}`}>
+        <Icon className={`h-6 w-6 transition-colors duration-300 ${isFocused ? 'text-blue-300 drop-shadow-lg' : 'text-neutral-300 dark:text-gray-500'}`}/>
+        {/* Changed focused text color to be more distinct */}
+        <span className={`text-lg font-extrabold transition-colors duration-300 ${isFocused ? 'text-blue-50' : 'text-neutral-300 dark:text-gray-500'}`}>{label}</span>
     </div>
 )
 
 
 /**
- * Renders the large, dominant visual for the left column of the campaign creation page.
- * It is styled to be a seamless, dark background feature.
+ * Renders the instructional text and guide overlay on top of the fixed Spline background.
+ * The primary purpose is to style the visual guide and ensure MOUSE EVENTS FALL THROUGH 
+ * to the background Spline canvas for robot interaction.
  */
 export function SplineCampaignVisual({ focusedField }) {
     
     let message = "Launch your idea in Web3.";
+    // REVERTED Logic to 5 steps
     if (focusedField === 'title' || focusedField === 'category') message = "Step 1: The Spark. What is your idea's name?";
     else if (focusedField === 'description' || focusedField === 'promptText') message = "Step 2: The Story. Tell your compelling 'why'.";
     else if (focusedField === 'fundingGoal' || focusedField === 'deadline') message = "Step 3: The Goal. Set your target amount in ETH.";
+    // The Visuals step is now Step 4 again
     else if (focusedField === 'media') message = "Step 4: The Visuals. A picture is worth a thousand donations.";
     else if (focusedField === null) message = "Review & Launch. One final look before you go live!";
 
 
     return (
-        // REMOVED CARD STYLING (no shadow, no explicit rounded-xl, near-transparent background)
-        <div className="relative w-full h-full bg-black/[0.1] dark:bg-gray-900/[0.1] overflow-hidden transition-all duration-500">
-            
-            <Spotlight
-                className="-top-40 left-0 md:left-60 md:-top-20"
-                fill="#3b82f6" 
-            />
-            
-            {/* The Spline Scene fills the entire background of this container */}
-            <SplineScene
-                scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-                className="w-full h-full"
-            />
-            
-            {/* Overlay for Text and Guide: Use pointer-events-none to let cursor events fall through 
-                to the Spline canvas below it, allowing the robot to interact with the mouse. */}
-            <div className="absolute inset-0 p-8 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/50 to-transparent pointer-events-none">
-                
-                <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 dark:from-white dark:to-gray-200 pointer-events-auto">
+        // This component is fixed to the screen, occupying the left half, and passing events through.
+        <div className="fixed top-0 left-0 h-full w-full lg:w-1/2 flex items-end justify-center lg:justify-start p-10 z-10 pointer-events-none">
+            <div 
+                // ENHANCED GLASSMORPHISM: Changed bg-white/10 to bg-white/30 for better light theme appearance
+                className="max-w-md p-8 lg:p-10 bg-white/30 dark:bg-black/40 backdrop-blur-xl rounded-2xl 
+                            transition-all duration-500 pointer-events-auto 
+                            shadow-2xl shadow-black/50 border border-white/20 dark:border-white/10"
+            >
+                 {/* STRONGER TITLE GRADIENT AND SHADOW */}
+                 <h1 className="text-3xl md:text-4xl font-extrabold bg-clip-text text-transparent 
+                                bg-gradient-to-b from-white to-neutral-200 
+                                dark:from-white dark:to-gray-200 drop-shadow-2xl">
                     Campaign Architect
                 </h1>
-                <p className="mt-2 text-lg text-neutral-300 dark:text-gray-400 max-w-lg transition-colors duration-500 pointer-events-auto">
+                {/* MESSAGE TEXT BRIGHTENED */}
+                <p className="mt-2 text-lg text-white dark:text-gray-300 max-w-lg transition-colors duration-500 drop-shadow-md">
                     {message}
                 </p>
                 
-                {/* Step Indicator based on focusedField */}
-                <div className="mt-8 space-y-3 pointer-events-auto">
+                {/* Step Indicator based on focusedField (Reverted to 5 steps) */}
+                <div className="mt-8 space-y-4"> {/* Increased space-y for better visual separation */}
                     <StepItem 
                         icon={Lightbulb} 
                         label="The Spark" 
@@ -80,11 +76,10 @@ export function SplineCampaignVisual({ focusedField }) {
                     <StepItem 
                         icon={CheckCircle} 
                         label="Review & Launch" 
-                        isFocused={focusedField === null}
+                        isFocused={focusedField === null || focusedField === 'review'}
                     />
                 </div>
             </div>
-
         </div>
     );
 }

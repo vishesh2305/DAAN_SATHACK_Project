@@ -8,6 +8,8 @@ import ProfilePage from './pages/ProfilePage';
 import AuthPage from './pages/AuthPage';
 import CreateCampaignPage from './pages/CreatecampaignPage';
 import SettingsPage from './pages/SettingsPage';
+import CampaignDetailPage from './pages/CampaignDetailPage';
+import OrganizerProfilePage from './pages/OrganizerProfilePage'; // <--- NEW IMPORT
 import NotFoundPage from './pages/NotFoundPage';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -39,6 +41,8 @@ function App() {
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/create" element={<CreateCampaignPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/campaign/:id" element={<CampaignDetailPage />} />
+              <Route path="/organizer/:id" element={<OrganizerProfilePage />} /> { /* <--- NEW ROUTE */ }
             
            
             <Route path="*" element={<NotFoundPage />} />

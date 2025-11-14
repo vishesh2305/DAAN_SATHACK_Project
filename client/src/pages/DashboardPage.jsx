@@ -1,27 +1,36 @@
+// src/pages/DashboardPage.jsx
+
 import React, { useState, useEffect } from 'react';
-import { Search, Grid3X3, List, Shield, LoaderCircle, Users, Target } from 'lucide-react';
+import { Search, Grid3X3, List, Shield, LoaderCircle, Users, Target, Clock, Zap } from 'lucide-react';
 import Web3 from 'web3';
 import { CROWDFUNDING_ABI, CROWDFUNDING_CONTRACT_ADDRESS } from '../constants';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import ProgressBar from '../components/common/ProgressBar';
-import CampaignDetailModal from '../components/CampaignDetailModal';
+import { Link } from 'react-router-dom';
+import { mockData } from '../data/mockData';
+import { daysLeft } from '../utils';
 
 const DashboardPage = () => {
     const [viewMode, setViewMode] = useState('grid');
-    const [selectedCampaign, setSelectedCampaign] = useState(null);
     const [campaigns, setCampaigns] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        const getCampaigns = async () => {
-            if (!window.ethereum) {
-                setError("Please install MetaMask to view campaigns.");
+        // === START: MOCK DATA FALLBACK LOGIC ===
+        if (!window.ethereum) {
+            setTimeout(() => {
+                setCampaigns(mockData.campaigns.reverse());
                 setIsLoading(false);
-                return;
-            }
+                setError("NOTE: Displaying mock data for frontend styling. Please connect MetaMask for live campaigns.");
+            }, 500);
+            return;
+        }
+        // === END: MOCK DATA FALLBACK LOGIC ===
+        
+        const getCampaigns = async () => {
             try {
                 setIsLoading(true);
                 const web3 = new Web3(window.ethereum);
@@ -45,14 +54,17 @@ const DashboardPage = () => {
                             donators: donatorsCount,
                             claimed: campaign.claimed,
                             verified: true,
+                            category: "Community"
                         };
                     })
                 );
     
                 setCampaigns(formattedCampaigns.reverse());
+                setError(null);
             } catch (err) {
-                console.error("Error fetching campaigns:", err);
-                setError("Failed to fetch campaigns. Please ensure your wallet is connected and the correct network is selected.");
+                console.error("Error fetching campaigns from contract:", err);
+                setCampaigns(mockData.campaigns.reverse());
+                setError("Failed to load live campaigns. Check network/contract, using mock data for now.");
             } finally {
                 setIsLoading(false);
             }
@@ -60,72 +72,84 @@ const DashboardPage = () => {
         getCampaigns();
     }, []);
 
-    const handleCampaignClick = (campaign) => {
-        setSelectedCampaign(campaign);
-    };
-
-    const handleCloseModal = () => {
-        setSelectedCampaign(null);
-    };
-    
     const filteredCampaigns = campaigns.filter(campaign => 
-        campaign.title.toLowerCase().includes(searchTerm.toLowerCase())
+        campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        campaign.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const CampaignCard = ({ campaign }) => {
-        const isExpired = Date.now() > campaign.deadline;
-        const daysLeft = isExpired ? 0 : Math.ceil((new Date(campaign.deadline) - Date.now()) / (1000 * 60 * 60 * 24));
+        const remainingDays = daysLeft(campaign.deadline);
+        const isExpired = remainingDays <= 0;
+        const daysLabel = isExpired ? 'Ended' : `${remainingDays} Days Left`;
         
-        // ✅ 1. DEFINE a default image URL
+        const fundingPercentage = (parseFloat(campaign.amountCollected) / parseFloat(campaign.target)) * 100;
+        const isFullyFunded = fundingPercentage >= 100;
+
         const defaultImage = 'https://placehold.co/600x400/94a3b8/ffffff?text=Daan';
 
-        // ✅ 2. HANDLE broken image links gracefully
         const handleImageError = (e) => {
-            e.target.onerror = null; // prevents looping
+            e.target.onerror = null; 
             e.target.src = defaultImage;
         };
 
+        const StatusBadge = () => {
+            if (campaign.claimed) {
+                return <div className="flex items-center bg-gray-500 text-white text-xs font-bold px-3 py-1 rounded-full">Claimed</div>;
+            }
+            if (isFullyFunded) {
+                return <div className="flex items-center bg-yellow-500 text-gray-900 text-xs font-bold px-3 py-1 rounded-full"><Zap className='h-3 w-3 mr-1'/> Fully Funded</div>;
+            }
+            if (isExpired) {
+                return <div className="flex items-center bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full"><Clock className='h-3 w-3 mr-1'/> Expired</div>;
+            }
+            return null;
+        };
+
         return (
-            <Card className={`overflow-hidden transition-shadow hover:shadow-xl flex flex-col h-full ${campaign.claimed ? 'grayscale opacity-60' : ''}`}>
+            <Card className={`overflow-hidden transition-shadow hover:shadow-xl hover:shadow-blue-500/20 flex flex-col h-full ${campaign.claimed ? 'grayscale opacity-60' : ''}`}>
+                
+                {/* Image and Badges */}
                 <div className="relative h-48 bg-gray-200 dark:bg-gray-800">
-                    {/* ✅ 3. USE the campaign image OR the default one if it's missing. Also, use the error handler. */}
                     <img 
                         src={campaign.image || defaultImage} 
                         alt={campaign.title} 
                         className="w-full h-full object-cover"
                         onError={handleImageError}
                     />
-                     <div className="absolute top-2 right-2">
-                        {campaign.claimed ? (
-                             <div className="flex items-center bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                                Ended
-                            </div>
-                        ) : campaign.verified && (
-                            <div className="flex items-center bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 text-xs font-bold px-2 py-1 rounded-full">
+                     <div className="absolute top-3 right-3 flex items-center space-x-2">
+                        <StatusBadge />
+                        {campaign.verified && (
+                            <div className="flex items-center bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
                                 <Shield className="h-3 w-3 mr-1"/> Verified
                             </div>
                         )}
                     </div>
+                     <div className="absolute bottom-0 left-0 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-tr-lg text-xs font-semibold text-white">
+                        {campaign.category}
+                    </div>
                 </div>
+                
+                {/* Content Area */}
                 <div className="p-4 flex flex-col flex-grow">
-                    <h3 className="font-bold text-lg text-gray-800 dark:text-white mb-2 truncate">{campaign.title}</h3>
+                    <h3 className="font-bold text-xl text-gray-800 dark:text-white mb-2 truncate">{campaign.title}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 flex-grow mb-4">{`${campaign.description.substring(0, 100)}...`}</p>
                     
                     <div className="mt-auto">
                         <ProgressBar current={campaign.amountCollected} target={campaign.target} />
                         
-                        <div className="grid grid-cols-3 gap-4 text-center mt-3">
+                        {/* Footer Stats - High Contrast */}
+                        <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg grid grid-cols-3 gap-2 text-center border dark:border-gray-700">
                             <div>
-                                <p className="font-bold text-sm text-gray-800 dark:text-white">{parseFloat(campaign.amountCollected).toFixed(2)} ETH</p>
+                                <p className="font-bold text-sm text-gray-900 dark:text-white">{parseFloat(campaign.amountCollected).toFixed(2)} ETH</p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">Raised</p>
                             </div>
                             <div>
-                                <p className="font-bold text-sm text-gray-800 dark:text-white">{campaign.donators}</p>
+                                <p className="font-bold text-sm text-gray-900 dark:text-white">{campaign.donators}</p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">Donators</p>
                             </div>
                             <div>
-                                <p className="font-bold text-sm text-gray-800 dark:text-white">{daysLeft}</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Days Left</p>
+                                <p className={`font-bold text-sm ${isExpired ? 'text-red-500 dark:text-red-400' : 'text-blue-500 dark:text-blue-400'}`}>{daysLabel}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Status</p>
                             </div>
                         </div>
                     </div>
@@ -134,49 +158,73 @@ const DashboardPage = () => {
         );
     };
 
+    const isGrid = viewMode === 'grid';
+
     return (
-        <>
-            <main className="container mx-auto px-4 py-8">
-                <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex-grow max-w-md">
+        <main className="container mx-auto px-4 py-8 pt-28">
+            
+            {/* Main Header (No change, remains statically placed) */}
+            <header className='mb-6'>
+                <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white">
+                    Explore Campaigns
+                </h1>
+                <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
+                    Fund the future with verifiably secure and transparent projects.
+                </p>
+            </header>
+
+            {/* STATIC CONTROL BAR (Placed just below the header, scrolls with the page) */}
+            <div className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-md border dark:border-gray-700 transition-all duration-300">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 flex-grow max-w-xl">
                         <div className="pl-4"> <Search className="h-5 w-5 text-gray-500" /> </div>
                         <input 
                             type="text" 
-                            placeholder="Search campaigns by title..." 
-                            className="bg-transparent p-2 focus:outline-none w-full"
+                            placeholder="Search campaigns by title or category..." 
+                            className="bg-transparent p-3 focus:outline-none w-full text-base"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="flex items-center space-x-2">
-                        <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="sm" onClick={() => setViewMode('grid')}> <Grid3X3 className="h-5 w-5"/> </Button>
-                        <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setViewMode('list')}> <List className="h-5 w-5"/> </Button>
+                    <div className="flex items-center space-x-2 flex-shrink-0">
+                         <span className='text-sm text-gray-500 dark:text-gray-400 hidden sm:inline'>View:</span>
+                        <Button variant={isGrid ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('grid')}> <Grid3X3 className="h-5 w-5"/> </Button>
+                        <Button variant={!isGrid ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('list')}> <List className="h-5 w-5"/> </Button>
                     </div>
                 </div>
-                
-                {isLoading ? (
-                    <div className="flex justify-center items-center h-64"> <LoaderCircle className="h-12 w-12 animate-spin text-blue-600" /> </div>
-                ) : error ? (
-                    <div className="text-center text-red-500 bg-red-100 dark:bg-red-900/50 p-4 rounded-lg"> <p>{error}</p> </div>
-                ) : (
-                    <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+            </div>
+            
+            {/* Campaign Content */}
+            {isLoading ? (
+                <div className="flex justify-center items-center h-64"> <LoaderCircle className="h-12 w-12 animate-spin text-blue-600" /> </div>
+            ) : (
+                <>
+                    {/* Error/Info Message Display */}
+                    {error && (
+                        <div className="text-center bg-yellow-100 dark:bg-yellow-900/50 p-4 rounded-lg mb-8">
+                            <p className="text-sm text-yellow-800 dark:text-yellow-300 font-medium">
+                                <span className='font-bold'>{error.includes('NOTE') ? 'INFO:' : 'ERROR:'}</span> {error.replace('NOTE: ', '').replace('ERROR: ', '')}
+                            </p>
+                        </div>
+                    )}
+                    
+                    {/* Campaign Grid/List */}
+                    <div className={`grid gap-8 ${isGrid ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
                         {filteredCampaigns.length > 0 ? (
                             filteredCampaigns.map(campaign => (
-                                <div key={campaign.id} onClick={() => handleCampaignClick(campaign)} className="cursor-pointer">
+                                <Link key={campaign.id} to={`/campaign/${campaign.id}`} className="cursor-pointer">
                                     <CampaignCard campaign={campaign} />
-                                </div>
+                                </Link>
                             ))
                         ) : (
                            <div className="col-span-full text-center text-gray-500 py-16">
-                             <p>No campaigns found.</p>
+                             <p>No campaigns found matching your criteria.</p>
                            </div>
                         )}
                     </div>
-                )}
-            </main>
-
-            {selectedCampaign && ( <CampaignDetailModal campaign={selectedCampaign} onClose={handleCloseModal} /> )}
-        </>
+                </>
+            )}
+        </main>
     );
 };
 
